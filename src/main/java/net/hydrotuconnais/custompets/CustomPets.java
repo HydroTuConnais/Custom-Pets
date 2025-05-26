@@ -1,6 +1,12 @@
 package net.hydrotuconnais.custompets;
 
 import com.mojang.logging.LogUtils;
+import net.hydrotuconnais.custompets.commands.PetCommand;
+import net.hydrotuconnais.custompets.entity.ModEntities;
+import net.hydrotuconnais.custompets.entity.client.ElephantRenderer;
+import net.hydrotuconnais.custompets.item.MobCreativeModeTabs;
+import net.hydrotuconnais.custompets.item.MobItems;
+import net.minecraft.client.renderer.entity.EntityRenderers;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.BuildCreativeModeTabContentsEvent;
@@ -25,14 +31,19 @@ public class CustomPets {
     public CustomPets(FMLJavaModLoadingContext context) {
         IEventBus modEventBus = context.getModEventBus();
 
-        // Register the commonSetup method for modloading
+        MobItems.register(modEventBus);
+
+        ModEntities.register(modEventBus);
+
+        MobCreativeModeTabs.register(modEventBus);
+
+
         modEventBus.addListener(this::commonSetup);
+        modEventBus.addListener(this::addCreative);
+
 
         // Register ourselves for server and other game events we are interested in
         MinecraftForge.EVENT_BUS.register(this);
-
-        // Register the item to a creative tab
-        modEventBus.addListener(this::addCreative);
 
         // Register our mod's ForgeConfigSpec so that Forge can create and load the config file for us
         context.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
@@ -44,8 +55,11 @@ public class CustomPets {
 
     // Add the example block item to the building blocks tab
     private void addCreative(BuildCreativeModeTabContentsEvent event) {
-
+        if(event.getTab() == MobCreativeModeTabs.HYDROTUCONNAIS_ITEMS_TAB.get()) {
+            event.accept(MobItems.ELEPHANT_SPAWN_EGG.get());
+        }
     }
+
 
     // You can use SubscribeEvent and let the Event Bus discover methods to call
     @SubscribeEvent
@@ -53,12 +67,17 @@ public class CustomPets {
 
     }
 
+    @SubscribeEvent
+    public void onRegisterCommands(net.minecraftforge.event.RegisterCommandsEvent event) {
+        PetCommand.register(event.getDispatcher());
+    }
+
     // You can use EventBusSubscriber to automatically register all static methods in the class annotated with @SubscribeEvent
     @Mod.EventBusSubscriber(modid = MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
     public static class ClientModEvents {
         @SubscribeEvent
         public static void onClientSetup(FMLClientSetupEvent event) {
-
+            EntityRenderers.register(ModEntities.ELEPHANT.get(), ElephantRenderer::new);
         }
     }
 }
