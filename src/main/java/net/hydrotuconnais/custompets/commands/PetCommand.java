@@ -2,15 +2,20 @@ package net.hydrotuconnais.custompets.commands;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
+import net.hydrotuconnais.custompets.Config;
 import net.hydrotuconnais.custompets.entity.ModEntities;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.animal.Animal;
+import net.minecraft.world.entity.TamableAnimal;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.network.chat.Component;
 import java.util.List;
+import java.util.UUID;
 
 public class PetCommand {
 
@@ -25,7 +30,8 @@ public class PetCommand {
                 .then(Commands.literal("kill")
                         .executes(context -> {
                             ServerPlayer player = context.getSource().getPlayerOrException();
-                            killPlayerPets(player);
+                            ServerLevel level = context.getSource().getLevel();
+                            killPlayerPets(level, player.getUUID());
                             player.sendSystemMessage(Component.literal("Tous vos pets ont été supprimés."));
                             return 1;
                         })
@@ -33,11 +39,11 @@ public class PetCommand {
                 .then(Commands.argument("name", StringArgumentType.word())
                         .executes(context -> {
                             ServerPlayer player = context.getSource().getPlayerOrException();
+                            ServerLevel level = context.getSource().getLevel();
                             String name = StringArgumentType.getString(context, "name");
-                            ServerLevel level = player.serverLevel();
 
                             // Kill les anciens pets
-                            killPlayerPets(player);
+                            killPlayerPets(level, player.getUUID());
 
                             // Vérifie le nom du pet et invoque s’il existe
                             if (name.equalsIgnoreCase("elephant")) {
@@ -61,10 +67,18 @@ public class PetCommand {
         );
     }
 
-    private static void killPlayerPets(ServerPlayer player) {
-        List<Entity> pets = player.serverLevel().getEntities(player, player.getBoundingBox().inflate(64), entity ->
-                entity.getUUID().equals(player.getUUID()) && entity.getType() == ModEntities.ELEPHANT.get()
-        );
-        pets.forEach(Entity::discard);
+    private static void killPlayerPets(ServerLevel level, UUID playerUUID) {
+        for (Entity entity : level.getEntities().getAll()) {
+            if (entity instanceof TamableAnimal tameable && playerUUID.equals(tameable.getOwnerUUID())) {
+                if (entity instanceof LivingEntity living) {
+                    living.hurt(level.damageSources().outOfBorder(), Float.MAX_VALUE);
+                } else {
+                    entity.discard();
+                }
+                if (Config.debugMode) {
+                    System.out.println("[DEBUG] Pet killed: " + entity.getName().getString());
+                }
+            }
+        }
     }
 }

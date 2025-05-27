@@ -1,5 +1,6 @@
 package net.hydrotuconnais.custompets.entity.custom;
 
+import net.hydrotuconnais.custompets.Config;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -28,7 +29,7 @@ public class ElephantEntity extends TamableAnimal {
     private static final EntityDataAccessor<Boolean> SITTING =
             SynchedEntityData.defineId(ElephantEntity.class, EntityDataSerializers.BOOLEAN);
 
-    private static final EntityDataAccessor<Integer> ANIMATION_TICK =
+    private static final EntityDataAccessor<Integer> IDLE =
             SynchedEntityData.defineId(ElephantEntity.class, EntityDataSerializers.INT);
 
     public final AnimationState idleAnimationState = new AnimationState();
@@ -59,56 +60,48 @@ public class ElephantEntity extends TamableAnimal {
 
     @Override
     public InteractionResult mobInteract(Player player, InteractionHand hand) {
-        if (!this.level().isClientSide && hand == InteractionHand.MAIN_HAND) {
-            if (this.isOwnedBy(player)) {
-                this.setSitting(!this.isSitting());
-                return InteractionResult.SUCCESS;
-            } else {
-                player.sendSystemMessage(Component.translatable("entity.custompets.notowner"));
-                return InteractionResult.FAIL;
-            }
+        switch (hand) {
+            case MAIN_HAND:
+                if (this.isOwnedBy(player) && !player.level().isClientSide) {
+                    this.setSitting(!this.isSitting());
+                    return InteractionResult.SUCCESS;
+                }
+                break;
+            default:
+                return InteractionResult.PASS;
         }
         return super.mobInteract(player, hand);
     }
 
     /*================ Breeding Methods =================*/
-    /*
     @Nullable
     @Override
     public AgeableMob getBreedOffspring(ServerLevel pLevel, AgeableMob pOtherParent) {
         return ModEntities.ELEPHANT.get().create(pLevel);
     }
-    */
 
     /*================= Animation Methods =================*/
-    public void startIdleAnimation() {
-        this.entityData.set(ANIMATION_TICK, this.tickCount);
-    }
-
     private void setupAnimationStates() {
-        int animTick = this.entityData.get(ANIMATION_TICK);
+        int animTick = this.entityData.get(IDLE);
         if (animTick > 0 && !this.idleAnimationState.isStarted()) {
             this.idleAnimationState.start(animTick);
         }
     }
 
     /*================== Sitting Methods =================*/
-    public void setSitting(boolean sitting) {
-        this.entityData.set(SITTING, sitting);
-        if (sitting) {
-            this.startIdleAnimation();
+    public boolean isSitting() { return entityData.get(SITTING); }
+    public void setSitting(boolean sit) {
+        if (Config.debugMode){
+            System.out.println("[DEBUG] setSitting = " + sit + " | side = " + (level().isClientSide ? "CLIENT" : "SERVER"));
         }
-    }
-
-    public boolean isSitting() {
-        return this.entityData.get(SITTING);
+        entityData.set(SITTING, sit);
     }
 
     /*================= Synced Data =================*/
     @Override
     protected void defineSynchedData() {
         super.defineSynchedData();
-        this.entityData.define(ANIMATION_TICK, 0);
+        this.entityData.define(IDLE, 0);
         this.entityData.define(SITTING, false);
     }
 
@@ -118,7 +111,14 @@ public class ElephantEntity extends TamableAnimal {
         super.tick();
 
         if(this.level().isClientSide()) {
+            if (Config.debugMode) {
+                System.out.println("[CLIENT] Elephant " + this.getId() + " sitting=" + this.isSitting());
+            }
             this.setupAnimationStates();
+        } else {
+            if (Config.debugMode) {
+                System.out.println("[SERVER] Elephant " + this.getId() + " sitting=" + this.isSitting());
+            }
         }
     }
 

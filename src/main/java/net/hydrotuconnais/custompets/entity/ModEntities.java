@@ -2,6 +2,7 @@ package net.hydrotuconnais.custompets.entity;
 
 import net.hydrotuconnais.custompets.CustomPets;
 import net.hydrotuconnais.custompets.entity.custom.ElephantEntity;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraftforge.eventbus.api.IEventBus;
@@ -14,10 +15,14 @@ public class ModEntities {
             DeferredRegister.create(ForgeRegistries.ENTITY_TYPES, CustomPets.MOD_ID);
 
     public static final RegistryObject<EntityType<ElephantEntity>> ELEPHANT =
-            ENTITY_TYPES.register("elephant", () -> EntityType.Builder.of(ElephantEntity::new, MobCategory.CREATURE)
-                    .sized(1f, 1f).build("elephant"));
+            ENTITY_TYPES.register("elephant",
+                    () -> EntityType.Builder.of(ElephantEntity::new, MobCategory.CREATURE)
+                            .sized(1.0f, 1.0f)
+                            .build(CustomPets.MOD_ID + ":elephant"));
+
 
     public static void register(IEventBus eventBus) {
         ENTITY_TYPES.register(eventBus);
     }
+
 }

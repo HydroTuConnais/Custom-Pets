@@ -15,10 +15,10 @@ public class MobCreativeModeTabs {
 
     public static final RegistryObject<CreativeModeTab> HYDROTUCONNAIS_ITEMS_TAB = CREATIVE_MODE_TABS.register("hydrotuconnais_items_tab",
             () -> CreativeModeTab.builder()
-                    .icon(() -> new ItemStack(MobItems.ELEPHANT_SPAWN_EGG.get()))
+                    .icon(() -> new ItemStack(MobItems.SPAWN_EGGS.get("elephant").get()))
                     .title(Component.translatable("item.custompets.elephant_spawn_egg"))
                     .displayItems((itemDisplayParameters, output) -> {
-                        output.accept(MobItems.ELEPHANT_SPAWN_EGG.get());
+                        output.accept(MobItems.SPAWN_EGGS.get("elephant").get());
                     })
                     .build());
 

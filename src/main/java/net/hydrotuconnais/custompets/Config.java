@@ -36,9 +36,15 @@ public class Config
             .comment("A list of items to log on common setup.")
             .defineListAllowEmpty("items", List.of("minecraft:iron_ingot"), Config::validateItemName);
 
+    private static final ForgeConfigSpec.BooleanValue DEBUG_MODE = BUILDER
+            .comment("Activer le mode debug pour afficher les logs détaillés")
+            .define("debugMode", false);
+
+
     static final ForgeConfigSpec SPEC = BUILDER.build();
 
     public static boolean logDirtBlock;
+    public static boolean debugMode;
     public static int magicNumber;
     public static String magicNumberIntroduction;
     public static Set<Item> items;
@@ -52,6 +58,7 @@ public class Config
     static void onLoad(final ModConfigEvent event)
     {
         logDirtBlock = LOG_DIRT_BLOCK.get();
+        debugMode = DEBUG_MODE.get();
         magicNumber = MAGIC_NUMBER.get();
         magicNumberIntroduction = MAGIC_NUMBER_INTRODUCTION.get();
 

@@ -1,5 +1,6 @@
 package net.hydrotuconnais.custompets.entity.client;
 
+import net.hydrotuconnais.custompets.Config;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.LivingEntity;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -90,15 +91,17 @@ public class ElephantModel<T extends ElephantEntity> extends HierarchicalModel<T
         this.applyHeadRotation(netHeadYaw, headPitch);
 
         if (entity.isSitting()) {
-            assert Minecraft.getInstance().player != null;
-            if (entity.isOwnedBy(Minecraft.getInstance().player)) {
-                entity.idleAnimationState.startIfStopped((int) ageInTicks);
-
-                // Pour mettre sont cul de merde par terre
-                this.body.xRot = (float) Math.toRadians(-25);
-                this.animate(entity.idleAnimationState, ElephantAnimations.ANIM_ELEPHANT_IDLE, ageInTicks, 1f);
+            if (Config.debugMode){
+                System.out.println("[RENDER] Elephant is sitting");
             }
+            entity.idleAnimationState.startIfStopped((int) ageInTicks);
+
+            this.body.xRot = (float) Math.toRadians(-25);
+            this.animate(entity.idleAnimationState, ElephantAnimations.ANIM_ELEPHANT_IDLE, ageInTicks, 1f);
         } else if (limbSwingAmount > 0.1f) {
+            if (Config.debugMode) {
+                System.out.println("[RENDER] Elephant is not sitting");
+            }
             this.animateWalk(ElephantAnimations.ANIM_ELEPHANT_WALK, limbSwing, limbSwingAmount, 2.5f, 2f);
         }
     }
