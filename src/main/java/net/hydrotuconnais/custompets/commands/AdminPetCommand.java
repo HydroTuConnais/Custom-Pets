@@ -11,79 +11,75 @@ import net.minecraft.server.level.ServerPlayer;
 import java.util.*;
 
 public class AdminPetCommand {
-    // Map pour stocker les permissions des joueurs
     private static final Map<UUID, Set<String>> playerPetPermissions = new HashMap<>();
-    // Liste des pets disponibles
-    private static final Set<String> availablePets = new HashSet<>(Arrays.asList("elephant")); // Ajoutez d'autres pets ici
+    private static final Set<String> availablePets = new HashSet<>(Arrays.asList("elephant"));
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        dispatcher.register(Commands.literal("adminpets")
-                .requires(source -> source.hasPermission(2)) // Niveau 2 = Permission OP
-                .then(Commands.literal("list")
-                        .executes(context -> {
-                            ServerPlayer admin = context.getSource().getPlayerOrException();
-                            admin.sendSystemMessage(Component.literal("Pets disponibles : " + String.join(", ", availablePets)));
-                            return 1;
-                        }))
-                .then(Commands.argument("player", EntityArgument.player())
-                        .then(Commands.literal("add")
-                                .then(Commands.argument("petName", StringArgumentType.word())
+        dispatcher.register(Commands.literal("adminpet")
+                .requires(source -> source.hasPermission(2))
+                .then(Commands.literal("permission")
+                        .then(Commands.argument("player", EntityArgument.player())
+                                .then(Commands.literal("add")
+                                        .then(Commands.argument("petType", StringArgumentType.word())
+                                                .executes(context -> {
+                                                    ServerPlayer targetPlayer = EntityArgument.getPlayer(context, "player");
+                                                    String petType = StringArgumentType.getString(context, "petType");
+                                                    addPetPermission(targetPlayer.getUUID(), petType);
+                                                    context.getSource().sendSuccess(() -> Component.literal(
+                                                            "Permission ajoutée pour " + targetPlayer.getName().getString() +
+                                                                    " : " + petType), true);
+                                                    return 1;
+                                                })))
+                                .then(Commands.literal("remove")
+                                        .then(Commands.argument("petType", StringArgumentType.word())
+                                                .executes(context -> {
+                                                    ServerPlayer targetPlayer = EntityArgument.getPlayer(context, "player");
+                                                    String petType = StringArgumentType.getString(context, "petType");
+                                                    removePetPermission(targetPlayer.getUUID(), petType);
+                                                    context.getSource().sendSuccess(() -> Component.literal(
+                                                            "Permission retirée pour " + targetPlayer.getName().getString() +
+                                                                    " : " + petType), true);
+                                                    return 1;
+                                                })))
+                                .then(Commands.literal("list")
                                         .executes(context -> {
                                             ServerPlayer targetPlayer = EntityArgument.getPlayer(context, "player");
-                                            String petName = StringArgumentType.getString(context, "petName");
-
-                                            if (!availablePets.contains(petName.toLowerCase())) {
-                                                context.getSource().sendFailure(Component.literal("Pet inconnu : " + petName));
-                                                return 0;
-                                            }
-
-                                            addPetPermission(targetPlayer.getUUID(), petName.toLowerCase());
-                                            context.getSource().sendSuccess(
-                                                    () -> Component.literal("Permission accordée à " + targetPlayer.getName().getString() +
-                                                            " pour le pet : " + petName), true);
+                                            Set<String> permissions = getPlayerPermissions(targetPlayer.getUUID());
+                                            context.getSource().sendSuccess(() -> Component.literal(
+                                                    "Permissions de " + targetPlayer.getName().getString() + " : " +
+                                                            String.join(", ", permissions)), false);
                                             return 1;
-                                        })))
-                        .then(Commands.literal("remove")
-                                .then(Commands.argument("petName", StringArgumentType.word())
+                                        }))
+                                .then(Commands.literal("clear")
                                         .executes(context -> {
                                             ServerPlayer targetPlayer = EntityArgument.getPlayer(context, "player");
-                                            String petName = StringArgumentType.getString(context, "petName");
-
-                                            removePetPermission(targetPlayer.getUUID(), petName.toLowerCase());
-                                            context.getSource().sendSuccess(
-                                                    () -> Component.literal("Permission retirée à " + targetPlayer.getName().getString() +
-                                                            " pour le pet : " + petName), true);
+                                            clearPermissions(targetPlayer.getUUID());
+                                            context.getSource().sendSuccess(() -> Component.literal(
+                                                    "Permissions effacées pour " + targetPlayer.getName().getString()), true);
                                             return 1;
-                                        })))
-                        .then(Commands.literal("reset")
-                                .executes(context -> {
-                                    ServerPlayer targetPlayer = EntityArgument.getPlayer(context, "player");
-                                    resetPlayerPermissions(targetPlayer.getUUID());
-                                    context.getSource().sendSuccess(
-                                            () -> Component.literal("Toutes les permissions de pets ont été retirées à " +
-                                                    targetPlayer.getName().getString()), true);
-                                    return 1;
-                                }))
-                ));
+                                        }))
+                        )));
     }
 
-    private static void addPetPermission(UUID playerUUID, String petName) {
-        playerPetPermissions.computeIfAbsent(playerUUID, k -> new HashSet<>()).add(petName);
+
+    public static void addPetPermission(UUID playerUUID, String petType) {
+        playerPetPermissions.computeIfAbsent(playerUUID, k -> new HashSet<>()).add(petType.toLowerCase());
     }
 
-    private static void removePetPermission(UUID playerUUID, String petName) {
-        playerPetPermissions.computeIfPresent(playerUUID, (uuid, pets) -> {
-            pets.remove(petName);
-            return pets;
-        });
+    public static void removePetPermission(UUID playerUUID, String petType) {
+        playerPetPermissions.computeIfAbsent(playerUUID, k -> new HashSet<>()).remove(petType.toLowerCase());
     }
 
-    private static void resetPlayerPermissions(UUID playerUUID) {
-        playerPetPermissions.remove(playerUUID);
-    }
-
-    public static boolean hasPermissionForPet(UUID playerUUID, String petName) {
+    public static boolean hasPermission(UUID playerUUID, String petType) {
         return playerPetPermissions.containsKey(playerUUID) &&
-                playerPetPermissions.get(playerUUID).contains(petName.toLowerCase());
+                playerPetPermissions.get(playerUUID).contains(petType.toLowerCase());
+    }
+
+    public static Set<String> getPlayerPermissions(UUID playerUUID) {
+        return playerPetPermissions.getOrDefault(playerUUID, new HashSet<>());
+    }
+
+    public static void clearPermissions(UUID playerUUID) {
+        playerPetPermissions.remove(playerUUID);
     }
 }

@@ -15,6 +15,7 @@ import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.network.chat.Component;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 public class PetCommand {
@@ -23,8 +24,12 @@ public class PetCommand {
         dispatcher.register(Commands.literal("pets")
                 .executes(context -> {
                     ServerPlayer player = context.getSource().getPlayerOrException();
-                    // Afficher la liste des pets disponibles (à adapter selon vos données)
-                    player.sendSystemMessage(Component.literal("Pets disponibles: elephant"));
+                    Set<String> permissions = AdminPetCommand.getPlayerPermissions(player.getUUID());
+                    if (permissions.isEmpty()) {
+                        player.sendSystemMessage(Component.literal("§cVous n'avez accès à aucun pet."));
+                    } else {
+                        player.sendSystemMessage(Component.literal("§aPets disponibles: §f" + String.join(", ", permissions)));
+                    }
                     return 1;
                 })
                 .then(Commands.literal("kill")
@@ -32,7 +37,7 @@ public class PetCommand {
                             ServerPlayer player = context.getSource().getPlayerOrException();
                             ServerLevel level = context.getSource().getLevel();
                             killPlayerPets(level, player.getUUID());
-                            player.sendSystemMessage(Component.literal("Tous vos pets ont été supprimés."));
+                            player.sendSystemMessage(Component.literal("§aTous vos pets ont été supprimés."));
                             return 1;
                         })
                 )
@@ -40,13 +45,16 @@ public class PetCommand {
                         .executes(context -> {
                             ServerPlayer player = context.getSource().getPlayerOrException();
                             ServerLevel level = context.getSource().getLevel();
-                            String name = StringArgumentType.getString(context, "name");
+                            String name = StringArgumentType.getString(context, "name").toLowerCase();
 
-                            // Kill les anciens pets
+                            if (!AdminPetCommand.hasPermission(player.getUUID(), name)) {
+                                player.sendSystemMessage(Component.literal("§cVous n'avez pas la permission d'invoquer ce pet !"));
+                                return 0;
+                            }
+
                             killPlayerPets(level, player.getUUID());
 
-                            // Vérifie le nom du pet et invoque s’il existe
-                            if (name.equalsIgnoreCase("elephant")) {
+                            if (name.equals("elephant")) {
                                 Animal pet = ModEntities.ELEPHANT.get().create(level);
                                 if (pet != null) {
                                     pet.moveTo(player.getX(), player.getY(), player.getZ(), 0, 0);
@@ -56,11 +64,11 @@ public class PetCommand {
                                     }
 
                                     level.addFreshEntity(pet);
-                                    player.sendSystemMessage(Component.literal("Éléphant invoqué !"));
+                                    player.sendSystemMessage(Component.literal("§aÉléphant invoqué !"));
                                     return 1;
                                 }
                             }
-                            player.sendSystemMessage(Component.literal("Pet non reconnu ou indisponible."));
+                            player.sendSystemMessage(Component.literal("§cPet non reconnu ou indisponible."));
                             return 0;
                         })
                 )
