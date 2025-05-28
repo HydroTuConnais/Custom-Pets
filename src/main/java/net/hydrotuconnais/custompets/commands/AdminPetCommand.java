@@ -74,9 +74,13 @@ public class AdminPetCommand {
                                         .executes(context -> {
                                             ServerPlayer targetPlayer = EntityArgument.getPlayer(context, "player");
                                             Set<String> permissions = getPlayerPermissions(targetPlayer.getUUID());
+                                            String permissionList = permissions.isEmpty() ?
+                                                    " Aucune permission" :
+                                                    "\n- " + String.join("\n- ", permissions);
+
                                             context.getSource().sendSuccess(() -> Component.literal(
                                                     "Permissions de " + targetPlayer.getName().getString() + " : " +
-                                                            String.join(", ", permissions)), false);
+                                                            permissionList), false);
                                             return 1;
                                         }))
                                 .then(Commands.literal("clear")
