@@ -59,10 +59,9 @@ public class CustomPets {
 
     }
 
-    // Add the example block item to the building blocks tab
-    private void addCreative(BuildCreativeModeTabContentsEvent event) {
-        if(event.getTab() == MobCreativeModeTabs.HYDROTUCONNAIS_ITEMS_TAB.get()) {
-            event.accept(MobItems.SPAWN_EGGS.get("elephant").get());
+    private void addCreative(final BuildCreativeModeTabContentsEvent event) {
+        if (event.getTabKey().equals(MobCreativeModeTabs.HYDROTUCONNAIS_ITEMS_TAB.getKey())) {
+            MobItems.SPAWN_EGGS.forEach((key, value) -> event.accept(value.get()));
         }
     }
 

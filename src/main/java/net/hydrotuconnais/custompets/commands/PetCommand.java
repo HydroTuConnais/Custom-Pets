@@ -47,7 +47,8 @@ public class PetCommand {
                             ServerLevel level = context.getSource().getLevel();
                             String name = StringArgumentType.getString(context, "name").toLowerCase();
 
-                            if (!AdminPetCommand.hasPermission(player.getUUID(), name)) {
+                            if (!player.hasPermissions(2) &&
+                                    !AdminPetCommand.hasPermission(player.getUUID(), name)) {
                                 player.sendSystemMessage(Component.literal("§cVous n'avez pas la permission d'invoquer ce pet !"));
                                 return 0;
                             }

@@ -1,6 +1,7 @@
 package net.hydrotuconnais.custompets.item;
 
 import net.hydrotuconnais.custompets.CustomPets;
+import net.hydrotuconnais.custompets.entity.ModEntities;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.core.registries.Registries;
@@ -15,10 +16,10 @@ public class MobCreativeModeTabs {
 
     public static final RegistryObject<CreativeModeTab> HYDROTUCONNAIS_ITEMS_TAB = CREATIVE_MODE_TABS.register("hydrotuconnais_items_tab",
             () -> CreativeModeTab.builder()
-                    .icon(() -> new ItemStack(MobItems.SPAWN_EGGS.get("elephant").get()))
+                    .icon(() -> new ItemStack(MobItems.SPAWN_EGGS.get(ModEntities.ELEPHANT).get()))
                     .title(Component.translatable("item.custompets.elephant_spawn_egg"))
                     .displayItems((itemDisplayParameters, output) -> {
-                        output.accept(MobItems.SPAWN_EGGS.get("elephant").get());
+                        MobItems.SPAWN_EGGS.forEach((key, value) -> output.accept(value.get()));
                     })
                     .build());
 
