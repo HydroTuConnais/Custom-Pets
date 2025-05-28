@@ -32,6 +32,9 @@ public class ElephantEntity extends TamableAnimal {
     private static final EntityDataAccessor<Integer> IDLE =
             SynchedEntityData.defineId(ElephantEntity.class, EntityDataSerializers.INT);
 
+    private static final EntityDataAccessor<Boolean> INVINCIBLE =
+            SynchedEntityData.defineId(ElephantEntity.class, EntityDataSerializers.BOOLEAN);
+
     public final AnimationState idleAnimationState = new AnimationState();
     private int idleAnimationTimeout = 0;
 
@@ -43,19 +46,20 @@ public class ElephantEntity extends TamableAnimal {
         return Animal.createMobAttributes()
                 .add(Attributes.MAX_HEALTH, 20.0)
                 .add(Attributes.MOVEMENT_SPEED, 0.25)
-                .add(Attributes.FOLLOW_RANGE, 16.0);
+                .add(Attributes.FOLLOW_RANGE, 8.0);
     }
 
     @Override
     protected void registerGoals() {
         this.goalSelector.addGoal(0, new FloatGoal(this));
+        this.goalSelector.addGoal(1, new FollowOwnerGoal(this, 1.0, 10.0f, 2.0f, false));
 
-        this.goalSelector.addGoal(1, new PanicGoal(this, 1.25));
-        this.goalSelector.addGoal(2, new BreedGoal(this, 1.0));
+        this.goalSelector.addGoal(2, new PanicGoal(this, 1.25));
+        this.goalSelector.addGoal(3, new BreedGoal(this, 1.0));
 
-        this.goalSelector.addGoal(3, new WaterAvoidingRandomStrollGoal(this, 1.0));
-        this.goalSelector.addGoal(4, new LookAtPlayerGoal(this, Animal.class, 8.0F));
-        this.goalSelector.addGoal(5, new RandomLookAroundGoal(this));
+        this.goalSelector.addGoal(4, new WaterAvoidingRandomStrollGoal(this, 1.0));
+        this.goalSelector.addGoal(5, new LookAtPlayerGoal(this, Animal.class, 8.0F));
+        this.goalSelector.addGoal(6, new RandomLookAroundGoal(this));
     }
 
     @Override
@@ -78,6 +82,24 @@ public class ElephantEntity extends TamableAnimal {
     @Override
     public AgeableMob getBreedOffspring(ServerLevel pLevel, AgeableMob pOtherParent) {
         return ModEntities.ELEPHANT.get().create(pLevel);
+    }
+
+    /*================= Invicible Methods =================*/
+
+    @Override
+    public boolean hurt(net.minecraft.world.damagesource.DamageSource source, float amount) {
+        if (this.isInvincible()) {
+            return false;
+        }
+        return super.hurt(source, amount);
+    }
+
+    public void setInvincible(boolean invincible) {
+        this.entityData.set(INVINCIBLE, invincible);
+    }
+
+    public boolean isInvincible() {
+        return this.entityData.get(INVINCIBLE);
     }
 
     /*================= Animation Methods =================*/
@@ -103,6 +125,28 @@ public class ElephantEntity extends TamableAnimal {
         super.defineSynchedData();
         this.entityData.define(IDLE, 0);
         this.entityData.define(SITTING, false);
+        this.entityData.define(INVINCIBLE, false);
+    }
+
+    /*================= Owner Methods =================*/
+
+    @Override
+    public void addAdditionalSaveData(net.minecraft.nbt.CompoundTag tag) {
+        super.addAdditionalSaveData(tag);
+        tag.putBoolean("Invincible", this.isInvincible());
+        tag.putBoolean("Sitting", this.isSitting());
+        if (this.getOwnerUUID() != null) {
+            tag.putUUID("OwnerUUID", this.getOwnerUUID());
+        }
+    }
+    @Override
+    public void readAdditionalSaveData(net.minecraft.nbt.CompoundTag tag) {
+        super.readAdditionalSaveData(tag);
+        this.setInvincible(tag.getBoolean("Invincible"));
+        this.setSitting(tag.getBoolean("Sitting"));
+        if (tag.hasUUID("OwnerUUID")) {
+            this.setOwnerUUID(tag.getUUID("OwnerUUID"));
+        }
     }
 
     /*================= Utils Methods =================*/

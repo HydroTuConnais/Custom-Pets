@@ -14,8 +14,8 @@ import net.minecraft.server.level.ServerPlayer;
 import java.util.*;
 
 public class AdminPetCommand {
-    private static final Map<UUID, Set<String>> playerPetPermissions = new HashMap<>();
-    private static final Set<String> availablePetTypes = new HashSet<>(ModEntities.getAllEntityTypes());
+    public static final Map<UUID, Set<String>> playerPetPermissions = new HashMap<>();
+    public static final Set<String> availablePetTypes = new HashSet<>(ModEntities.getAllEntityTypes());
     private static final SuggestionProvider<CommandSourceStack> SUGGEST_PET_TYPES = (context, builder) -> {
         return SharedSuggestionProvider.suggest(availablePetTypes, builder);
     };
@@ -28,7 +28,6 @@ public class AdminPetCommand {
             builder
         );
     };
-
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("adminpet")

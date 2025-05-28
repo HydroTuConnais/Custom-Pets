@@ -7,12 +7,14 @@ import net.hydrotuconnais.custompets.entity.ModEntities;
 import net.hydrotuconnais.custompets.entity.client.ElephantRenderer;
 import net.hydrotuconnais.custompets.item.MobCreativeModeTabs;
 import net.hydrotuconnais.custompets.item.MobItems;
+import net.hydrotuconnais.custompets.utils.FileControl;
 import net.minecraft.client.renderer.entity.EntityRenderers;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.BuildCreativeModeTabContentsEvent;
 import net.minecraftforge.event.server.ServerStartingEvent;
+import net.minecraftforge.event.server.ServerStoppingEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -23,6 +25,9 @@ import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.slf4j.Logger;
 
+import net.minecraftforge.fml.ModLoadingContext;
+
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -31,14 +36,14 @@ import java.util.Map;
 public class CustomPets {
     // Define mod id in a common place for everything to reference
     public static final String MOD_ID = "custompets";
-    // Directly reference a slf4j logger
     public static final Logger LOGGER = LogUtils.getLogger();
 
-    public CustomPets(FMLJavaModLoadingContext context) {
-        IEventBus modEventBus = context.getModEventBus();
+    public CustomPets() {
+        IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
 
         // Enregistrer la config en premier
-        context.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
+        //context.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
+        ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, Config.SPEC);
 
         // Puis les entités
         ModEntities.register(modEventBus);
@@ -55,9 +60,7 @@ public class CustomPets {
         MinecraftForge.EVENT_BUS.register(this);
     }
 
-    private void commonSetup(final FMLCommonSetupEvent event) {
-
-    }
+    private void commonSetup(final FMLCommonSetupEvent event) {}
 
     private void addCreative(final BuildCreativeModeTabContentsEvent event) {
         if (event.getTabKey().equals(MobCreativeModeTabs.HYDROTUCONNAIS_ITEMS_TAB.getKey())) {
@@ -69,7 +72,12 @@ public class CustomPets {
     // You can use SubscribeEvent and let the Event Bus discover methods to call
     @SubscribeEvent
     public void onServerStarting(ServerStartingEvent event) {
+        FileControl.loadPermissions();
+    }
 
+    @SubscribeEvent
+    public void onServerStopping(ServerStoppingEvent event) {
+        FileControl.savePermissions();
     }
 
     @SubscribeEvent

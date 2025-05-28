@@ -15,6 +15,6 @@ public class ElephantRenderer extends MobRenderer<ElephantEntity, ElephantModel<
 
     @Override
     public ResourceLocation getTextureLocation(ElephantEntity entity) {
-        return ResourceLocation.fromNamespaceAndPath(CustomPets.MOD_ID, "textures/entity/elephant/elephant.png");
+        return new ResourceLocation(CustomPets.MOD_ID, "textures/entity/elephant/elephant.png");
     }
 }

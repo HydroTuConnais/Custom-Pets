@@ -16,8 +16,8 @@ public class MobCreativeModeTabs {
 
     public static final RegistryObject<CreativeModeTab> HYDROTUCONNAIS_ITEMS_TAB = CREATIVE_MODE_TABS.register("hydrotuconnais_items_tab",
             () -> CreativeModeTab.builder()
-                    .icon(() -> new ItemStack(MobItems.SPAWN_EGGS.get(ModEntities.ELEPHANT).get()))
-                    .title(Component.translatable("item.custompets.elephant_spawn_egg"))
+                    .icon(() -> new ItemStack(net.minecraft.world.item.Items.BONE))
+                    .title(Component.translatable(CustomPets.MOD_ID))
                     .displayItems((itemDisplayParameters, output) -> {
                         MobItems.SPAWN_EGGS.forEach((key, value) -> output.accept(value.get()));
                     })

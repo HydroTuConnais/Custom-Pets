@@ -17,6 +17,7 @@ import net.minecraft.network.chat.Component;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.StreamSupport;
 
 public class PetCommand {
 
@@ -28,7 +29,17 @@ public class PetCommand {
                     if (permissions.isEmpty()) {
                         player.sendSystemMessage(Component.literal("§cVous n'avez accès à aucun pet."));
                     } else {
-                        player.sendSystemMessage(Component.literal("§aPets disponibles: §f" + String.join(", ", permissions)));
+                        List<String> displayList = new java.util.ArrayList<>();
+                        for (String pet : AdminPetCommand.availablePetTypes) {
+                            if (permissions.contains(pet.toLowerCase())) {
+                                displayList.add(pet);
+                            } else {
+                                if(player.hasPermissions(2)){
+                                    displayList.add(pet + " (admin)");
+                                }
+                            }
+                        }
+                        player.sendSystemMessage(Component.literal("§aPets disponibles: §f" + String.join(", ", displayList)));
                     }
                     return 1;
                 })
@@ -36,8 +47,19 @@ public class PetCommand {
                         .executes(context -> {
                             ServerPlayer player = context.getSource().getPlayerOrException();
                             ServerLevel level = context.getSource().getLevel();
+                            int before = (int) StreamSupport.stream(level.getEntities().getAll().spliterator(), false)
+                                    .filter(e -> e instanceof TamableAnimal && player.getUUID().equals(((TamableAnimal) e).getOwnerUUID()))
+                                    .count();
                             killPlayerPets(level, player.getUUID());
-                            player.sendSystemMessage(Component.literal("§aTous vos pets ont été supprimés."));
+                            int after = (int) StreamSupport.stream(level.getEntities().getAll().spliterator(), false)
+                                    .filter(e -> e instanceof TamableAnimal && player.getUUID().equals(((TamableAnimal) e).getOwnerUUID()))
+                                    .count();
+                            int killed = before - after;
+                            if (killed > 0) {
+                                player.sendSystemMessage(Component.literal("§a" + killed + " pet(s) supprimé(s)."));
+                            } else {
+                                player.sendSystemMessage(Component.literal("§cAucun pet à supprimer."));
+                            }
                             return 1;
                         })
                 )
@@ -60,11 +82,19 @@ public class PetCommand {
                                 if (pet != null) {
                                     pet.moveTo(player.getX(), player.getY(), player.getZ(), 0, 0);
 
-                                    if (pet instanceof net.minecraft.world.entity.TamableAnimal tamable) {
+                                    if (pet instanceof net.hydrotuconnais.custompets.entity.custom.ElephantEntity elephant) {
+                                        if( Config.debugMode) {
+                                            System.out.println("[DEBUG] Invoquer un éléphant pour le joueur: " + player.getName().getString());
+                                        }
+                                        elephant.setOwnerUUID(player.getUUID());
+                                        elephant.setInvincible(true);
+                                        elephant.setSitting(false);
+                                    } else if (pet instanceof net.minecraft.world.entity.TamableAnimal tamable) {
                                         tamable.setOwnerUUID(player.getUUID());
                                     }
 
                                     level.addFreshEntity(pet);
+
                                     player.sendSystemMessage(Component.literal("§aÉléphant invoqué !"));
                                     return 1;
                                 }
@@ -78,7 +108,14 @@ public class PetCommand {
 
     private static void killPlayerPets(ServerLevel level, UUID playerUUID) {
         for (Entity entity : level.getEntities().getAll()) {
-            if (entity instanceof TamableAnimal tameable && playerUUID.equals(tameable.getOwnerUUID())) {
+            if (entity instanceof TamableAnimal tameable
+                    && playerUUID.equals(tameable.getOwnerUUID())
+                    && !(entity instanceof ServerPlayer)) {
+                try {
+                    entity.getClass().getMethod("setInvincible", boolean.class)
+                            .invoke(entity, false);
+                } catch (Exception ignored) {}
+
                 if (entity instanceof LivingEntity living) {
                     living.hurt(level.damageSources().outOfBorder(), Float.MAX_VALUE);
                 } else {

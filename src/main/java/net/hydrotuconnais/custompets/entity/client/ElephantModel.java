@@ -17,7 +17,7 @@ import net.minecraft.util.Mth;
 
 public class ElephantModel<T extends ElephantEntity> extends HierarchicalModel<T> {
     public static final ModelLayerLocation LAYER_LOCATION =
-            new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(CustomPets.MOD_ID, "elephant"), "main");
+            new ModelLayerLocation(new ResourceLocation(CustomPets.MOD_ID, "elephant"), "main");
     private final ModelPart body;
     private final ModelPart head;
 
