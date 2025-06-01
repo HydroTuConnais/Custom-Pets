@@ -23,9 +23,11 @@ public class ModEntities {
                             .build(CustomPets.MOD_ID + ":elephant"));
 
     public static List<String> getAllEntityTypes() {
-        return ENTITY_TYPES.getEntries().stream()
+        return List.of("elephant", "lion", "tiger", "bear", "wolf", "fox", "cat", "dog", "rabbit", "panda", "giraffe", "zebra", "monkey", "kangaroo", "hippo", "rhino", "leopard", "crocodile", "eagle", "owl");
+        /*return ENTITY_TYPES.getEntries().stream()
                 .map(registryObject -> registryObject.getId().getPath())
                 .toList();
+         */
     }
 
     public static void register(IEventBus eventBus) {

@@ -4,6 +4,9 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import net.hydrotuconnais.custompets.Config;
 import net.hydrotuconnais.custompets.entity.ModEntities;
+import net.hydrotuconnais.custompets.network.NetworkHandler;
+import net.hydrotuconnais.custompets.network.OpenPetsMenuPacket;
+import net.hydrotuconnais.custompets.screen.PetsScreen;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.server.level.ServerLevel;
@@ -12,31 +15,33 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.TamableAnimal;
-import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.network.chat.Component;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.fml.DistExecutor;
+
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.StreamSupport;
 
-public class PetCommand {
+public class PetsCommand {
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("pets")
                 .executes(context -> {
                     ServerPlayer player = context.getSource().getPlayerOrException();
-                    Set<String> permissions = AdminPetCommand.getPlayerPermissions(player.getUUID());
-                    if (permissions.isEmpty()) {
+                    Set<String> permissions = AdminPetsCommand.getPlayerPermissions(player.getUUID());
+                    boolean isAdmin = player.hasPermissions(Config.ADMIN_PERMISSION_LEVEL);
+
+                    if (permissions.isEmpty() && !isAdmin) {
                         player.sendSystemMessage(Component.literal("§cVous n'avez accès à aucun pet."));
                     } else {
                         List<String> displayList = new java.util.ArrayList<>();
-                        for (String pet : AdminPetCommand.availablePetTypes) {
+                        for (String pet : AdminPetsCommand.availablePetTypes) {
                             if (permissions.contains(pet.toLowerCase())) {
                                 displayList.add(pet);
-                            } else {
-                                if(player.hasPermissions(2)){
-                                    displayList.add(pet + " (admin)");
-                                }
+                            } else if (isAdmin) {
+                                displayList.add(pet + " (admin)");
                             }
                         }
                         player.sendSystemMessage(Component.literal("§aPets disponibles: §f" + String.join(", ", displayList)));
@@ -63,14 +68,16 @@ public class PetCommand {
                             return 1;
                         })
                 )
-                .then(Commands.argument("name", StringArgumentType.word())
+                .then(Commands.literal("spawn")
+                    .then(Commands.argument("name", StringArgumentType.string())
+                        .suggests(AdminPetsCommand.SUGGEST_PET_PERMISSION)
                         .executes(context -> {
                             ServerPlayer player = context.getSource().getPlayerOrException();
                             ServerLevel level = context.getSource().getLevel();
                             String name = StringArgumentType.getString(context, "name").toLowerCase();
 
-                            if (!player.hasPermissions(2) &&
-                                    !AdminPetCommand.hasPermission(player.getUUID(), name)) {
+                            if (!player.hasPermissions(Config.ADMIN_PERMISSION_LEVEL) &&
+                                    !AdminPetsCommand.hasPermission(player.getUUID(), name)) {
                                 player.sendSystemMessage(Component.literal("§cVous n'avez pas la permission d'invoquer ce pet !"));
                                 return 0;
                             }
@@ -102,7 +109,17 @@ public class PetCommand {
                             player.sendSystemMessage(Component.literal("§cPet non reconnu ou indisponible."));
                             return 0;
                         })
+                    )
                 )
+        );
+        dispatcher.register(Commands.literal("petsmenu")
+                .executes(context -> {
+                    System.out.println("[DEBUG] Before: ");
+                    if (context.getSource().getEntity() instanceof ServerPlayer player) {
+                        NetworkHandler.sendToPlayer(new OpenPetsMenuPacket(), player);
+                    }
+                    return 1;
+                })
         );
     }
 

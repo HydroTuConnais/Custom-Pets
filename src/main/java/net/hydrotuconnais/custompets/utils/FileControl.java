@@ -2,7 +2,7 @@ package net.hydrotuconnais.custompets.utils;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import net.hydrotuconnais.custompets.commands.AdminPetCommand;
+import net.hydrotuconnais.custompets.commands.AdminPetsCommand;
 
 import java.io.*;
 import java.lang.reflect.Type;
@@ -15,8 +15,10 @@ public class FileControl {
     private static final Gson GSON = new Gson();
 
     public static void savePermissions() {
-        try (Writer writer = new FileWriter(PERMISSIONS_FILE)) {
-            GSON.toJson(AdminPetCommand.playerPetPermissions, writer);
+        File file = new File(PERMISSIONS_FILE);
+        file.getParentFile().mkdirs();
+        try (Writer writer = new FileWriter(file)) {
+            GSON.toJson(AdminPetsCommand.playerPetPermissions, writer);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -29,8 +31,8 @@ public class FileControl {
             Type type = new TypeToken<Map<UUID, Set<String>>>(){}.getType();
             Map<UUID, Set<String>> loaded = GSON.fromJson(reader, type);
             if (loaded != null) {
-                AdminPetCommand.playerPetPermissions.clear();
-                AdminPetCommand.playerPetPermissions.putAll(loaded);
+                AdminPetsCommand.playerPetPermissions.clear();
+                AdminPetsCommand.playerPetPermissions.putAll(loaded);
             }
         } catch (IOException e) {
             e.printStackTrace();

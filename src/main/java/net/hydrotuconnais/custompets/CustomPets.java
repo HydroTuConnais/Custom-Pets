@@ -1,16 +1,16 @@
 package net.hydrotuconnais.custompets;
 
 import com.mojang.logging.LogUtils;
-import net.hydrotuconnais.custompets.commands.AdminPetCommand;
-import net.hydrotuconnais.custompets.commands.PetCommand;
+import net.hydrotuconnais.custompets.commands.AdminPetsCommand;
+import net.hydrotuconnais.custompets.commands.PetsCommand;
 import net.hydrotuconnais.custompets.entity.ModEntities;
 import net.hydrotuconnais.custompets.entity.client.ElephantRenderer;
 import net.hydrotuconnais.custompets.item.MobCreativeModeTabs;
 import net.hydrotuconnais.custompets.item.MobItems;
+import net.hydrotuconnais.custompets.network.NetworkHandler;
 import net.hydrotuconnais.custompets.utils.FileControl;
 import net.minecraft.client.renderer.entity.EntityRenderers;
 import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.BuildCreativeModeTabContentsEvent;
 import net.minecraftforge.event.server.ServerStartingEvent;
@@ -19,17 +19,12 @@ import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
-import net.minecraftforge.fml.event.config.ModConfigEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.slf4j.Logger;
 
 import net.minecraftforge.fml.ModLoadingContext;
-
-
-import java.util.HashMap;
-import java.util.Map;
 
 // The value here should match an entry in the META-INF/mods.toml file
 @Mod(CustomPets.MOD_ID)
@@ -54,6 +49,8 @@ public class CustomPets {
         // Puis les tabs créatifs
         MobCreativeModeTabs.register(modEventBus);
 
+        NetworkHandler.register();
+
         modEventBus.addListener(this::commonSetup);
         modEventBus.addListener(this::addCreative);
 
@@ -67,27 +64,25 @@ public class CustomPets {
             MobItems.SPAWN_EGGS.forEach((key, value) -> event.accept(value.get()));
         }
     }
-
-
-    // You can use SubscribeEvent and let the Event Bus discover methods to call
     @SubscribeEvent
     public void onServerStarting(ServerStartingEvent event) {
+        System.out.println("Server starting...");
         FileControl.loadPermissions();
     }
 
     @SubscribeEvent
     public void onServerStopping(ServerStoppingEvent event) {
+        System.out.println("Server stoping...");
         FileControl.savePermissions();
     }
 
     @SubscribeEvent
     public void onRegisterCommands(net.minecraftforge.event.RegisterCommandsEvent event) {
-        PetCommand.register(event.getDispatcher());
+        PetsCommand.register(event.getDispatcher());
 
-        AdminPetCommand.register(event.getDispatcher());
+        AdminPetsCommand.register(event.getDispatcher());
     }
 
-    // You can use EventBusSubscriber to automatically register all static methods in the class annotated with @SubscribeEvent
     @Mod.EventBusSubscriber(modid = MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
     public static class ClientModEvents {
         @SubscribeEvent

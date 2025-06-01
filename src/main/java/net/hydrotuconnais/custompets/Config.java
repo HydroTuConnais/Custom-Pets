@@ -40,6 +40,9 @@ public class Config
             .comment("Activer le mode debug pour afficher les logs détaillés")
             .define("debugMode", false);
 
+    public static int ADMIN_PERMISSION_LEVEL = 2;
+
+
 
     static final ForgeConfigSpec SPEC = BUILDER.build();
 

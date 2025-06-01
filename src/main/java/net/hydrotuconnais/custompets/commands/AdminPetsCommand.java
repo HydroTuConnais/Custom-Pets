@@ -3,6 +3,7 @@ package net.hydrotuconnais.custompets.commands;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
+import net.hydrotuconnais.custompets.Config;
 import net.hydrotuconnais.custompets.entity.ModEntities;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -13,14 +14,14 @@ import net.minecraft.server.level.ServerPlayer;
 
 import java.util.*;
 
-public class AdminPetCommand {
+public class AdminPetsCommand {
     public static final Map<UUID, Set<String>> playerPetPermissions = new HashMap<>();
     public static final Set<String> availablePetTypes = new HashSet<>(ModEntities.getAllEntityTypes());
     private static final SuggestionProvider<CommandSourceStack> SUGGEST_PET_TYPES = (context, builder) -> {
         return SharedSuggestionProvider.suggest(availablePetTypes, builder);
     };
 
-    private static final SuggestionProvider<CommandSourceStack> SUGGEST_PET_PERMISSION = (context, builder) -> {
+    public static final SuggestionProvider<CommandSourceStack> SUGGEST_PET_PERMISSION = (context, builder) -> {
         return SharedSuggestionProvider.suggest(
             playerPetPermissions.values().stream()
                 .flatMap(Set::stream)
@@ -31,7 +32,7 @@ public class AdminPetCommand {
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("adminpet")
-                .requires(source -> source.hasPermission(2))
+                .requires(source -> source.hasPermission(Config.ADMIN_PERMISSION_LEVEL))
                 .then(Commands.literal("list")
                         .executes(context -> {
                             if (availablePetTypes.isEmpty()) {
@@ -103,6 +104,12 @@ public class AdminPetCommand {
     }
 
     public static boolean hasPermission(UUID playerUUID, String petType) {
+        CommandSourceStack source = net.minecraftforge.server.ServerLifecycleHooks.getCurrentServer().getPlayerList().getPlayer(playerUUID) != null
+                ? net.minecraftforge.server.ServerLifecycleHooks.getCurrentServer().getPlayerList().getPlayer(playerUUID).createCommandSourceStack()
+                : null;
+        if (source != null && source.hasPermission(Config.ADMIN_PERMISSION_LEVEL)) {
+            return true;
+        }
         return playerPetPermissions.containsKey(playerUUID) &&
                 playerPetPermissions.get(playerUUID).contains(petType.toLowerCase());
     }

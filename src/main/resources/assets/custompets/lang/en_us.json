@@ -3,6 +3,7 @@
   "entity.custompets.elephant": "Elephant",
   "entity.custompets.notowner": "You are not the owner of this pet.",
 
+  "screen.custompets.no_permission": "You do not have the pet.",
 
   "creativetab.custompets.hydrotuconnais_items": "Custom Pets"
 }
